@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance Records</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>Attendance Details</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Roll No</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+        </tr>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.student[0].name }}</td>
+            <td>{{ record.student[0].roll_no }}</td>
+            <td>{{ record.check_in.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>
+                {% if record.check_out %}
+                    {{ record.check_out.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

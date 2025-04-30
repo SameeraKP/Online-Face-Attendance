@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Registration</title>
+    <style>
+        .container { max-width: 500px; margin: 0 auto; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        #video { width: 100%; border: 2px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Student Registration</h2>
+        <form action="/register" method="POST">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="text" name="roll_no" placeholder="Roll Number" required>
+            <input type="email" name="email" placeholder="Email" required>
+            
+            <video id="video" autoplay></video>
+            <button type="button" id="capture-btn">Capture Face</button>
+            <input type="hidden" name="face_image" id="face-image">
+            
+            <button type="submit">Register</button>
+        </form>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(() => alert('Camera access required!'));
+        
+        document.getElementById('capture-btn').addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            document.getElementById('face-image').value = canvas.toDataURL('image/jpeg');
+            alert('Face captured!');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+flask
+flask_pymongo
+werkzeug
+opencv-python
+face_recognition
+pillow

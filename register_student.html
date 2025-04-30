@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Registration | AI Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #video {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            margin: 1rem 0;
+            transform: scaleX(-1);
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: opacity 0.3s;
+        }
+
+        #capture-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        #retry-camera {
+            background: #ff9800;
+            color: white;
+            display: none;
+        }
+
+        .camera-status {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .error-msg {
+            color: #dc3545;
+            text-align: center;
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8d7da;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2><i class="fas fa-user-plus"></i> Student Registration</h2>
+        <form action="/register-student" method="POST">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="text" name="roll" placeholder="Roll Number" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <div class="camera-box">
+                <video id="video" autoplay playsinline></video>
+                <div class="camera-status" id="camera-status">Click the button below to start the camera</div>
+                <div class="error-msg" id="error-msg"></div>
+                <button type="button" id="retry-camera">
+                    <i class="fas fa-sync-alt"></i> Retry Camera
+                </button>
+            </div>
+
+            <button type="button" id="capture-btn">
+                <i class="fas fa-camera"></i> Start Camera / Capture Face
+            </button>
+
+            <input type="hidden" name="face_image" id="face-image">
+
+            <button type="submit" style="background: #4CAF50;">
+                <i class="fas fa-check"></i> Complete Registration
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const cameraStatus = document.getElementById('camera-status');
+        const errorMsg = document.getElementById('error-msg');
+        const retryBtn = document.getElementById('retry-camera');
+        let stream = null;
+        let cameraInitialized = false;
+
+        document.getElementById('capture-btn').addEventListener('click', async () => {
+            if (!cameraInitialized) {
+                await initCamera();
+            } else {
+                captureFace();
+            }
+        });
+
+        async function initCamera() {
+            try {
+                const mediaDevices = navigator.mediaDevices;
+                if (!mediaDevices || !mediaDevices.getUserMedia) {
+                    throw new Error("Camera API not supported by this browser.");
+                }
+
+                stream = await mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+
+                video.srcObject = stream;
+                await video.play();
+                cameraInitialized = true;
+
+                cameraStatus.textContent = "Camera started. Position your face and click the button again to capture.";
+                errorMsg.textContent = "";
+                retryBtn.style.display = 'none';
+
+                document.getElementById('capture-btn').innerHTML = '<i class="fas fa-camera"></i> Capture Face';
+            } catch (error) {
+                handleCameraError(error);
+            }
+        }
+
+        function handleCameraError(error) {
+            console.error('Camera Error:', error);
+            cameraStatus.textContent = "";
+            retryBtn.style.display = 'block';
+
+            let message = `<strong>Camera Error:</strong> ${error.name || 'Unknown Error'}<br>
+                            <small>${error.message || ''}</small>`;
+
+            if (error.name === 'NotAllowedError') {
+                message += `<br><br>
+                    <i class="fas fa-info-circle"></i> Please allow camera access:<br>
+                    1. Click the padlock icon in the address bar<br>
+                    2. Set Camera permissions to "Allow"<br>
+                    3. Refresh the page
+                `;
+            }
+
+            errorMsg.innerHTML = message;
+        }
+
+        function captureFace() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0);
+
+            document.getElementById('face-image').value = canvas.toDataURL('image/jpeg', 0.8);
+            alert('Face captured successfully!');
+        }
+
+        retryBtn.addEventListener('click', () => {
+            errorMsg.textContent = "";
+            cameraStatus.textContent = "Retrying camera...";
+            cameraInitialized = false;
+            initCamera();
+        });
+    </script>
+</body>
+</html>

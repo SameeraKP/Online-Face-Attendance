@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body { padding: 20px; }
+        .stats { display: flex; gap: 20px; margin: 20px 0; }
+        .stat-box { padding: 20px; background: #f4f4f4; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <div class="stats">
+        <div class="stat-box">
+            <h3>Pending Approvals</h3>
+            <p>{{ stats.pending }}</p>
+        </div>
+        <div class="stat-box">
+            <h3>Total Students</h3>
+            <p>{{ stats.total }}</p>
+        </div>
+    </div>
+    <div>
+        <a href="/authorize-students"><button>Manage Approvals</button></a>
+        <a href="/view-attendance"><button>View Attendance</button></a>
+        <a href="/logout"><button>Logout</button></a>
+    </div>
+</body>
+</html>
