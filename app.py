@@ -11,13 +11,25 @@ app.secret_key = "your_secret_key"
 app.config["MONGO_URI"] = "mongodb://localhost:27017/face_attendance"
 mongo = PyMongo(app)
 
-# Database collections
+# Collections
 students = mongo.db.students
 attendance = mongo.db.attendance
 admins = mongo.db.admins
 
-# Load face detection classifier
+# Face Detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+# IP Restriction Middleware (College Wi-Fi & Localhost Only)
+@app.before_request
+def restrict_access():
+    allowed_ips = ["127.0.0.1", "192.168."]  # Add your college IP here
+    if request.remote_addr not in allowed_ips:
+        return "Access restricted to college Wi-Fi only", 403
+
+# Route to check IP (for debugging; remove in production)
+@app.route('/whats-my-ip')
+def show_ip():
+    return f"Your IP is: {request.remote_addr}", 200
 
 @app.route('/')
 def dashboard():
@@ -59,7 +71,6 @@ def admin_login():
 def authorize_students():
     if 'admin' not in session:
         return redirect('/admin-login')
-    
     pending_students = students.find({'approved': False})
     return render_template('authorize.html', students=pending_students)
 
@@ -81,14 +92,10 @@ def mark_attendance():
             'roll_no': request.form['roll_no'],
             'approved': True
         })
-        
         if not student:
             flash('Student not approved or invalid details!')
             return redirect('/mark-attendance')
-        
-        return render_template('face_capture.html', 
-                            student_id=str(student['_id']))
-    
+        return render_template('face_capture.html', student_id=str(student['_id']))
     return render_template('mark_attendance.html')
 
 @app.route('/verify-face', methods=['POST'])
@@ -98,20 +105,16 @@ def verify_face():
         img_data = request.form['image'].split(',')[1]
         nparr = np.frombuffer(base64.b64decode(img_data), np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        
+
         if len(faces) > 0:
-            # Fix: Use datetime instead of date
             today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             now = datetime.datetime.now()
-            
             record = attendance.find_one({
                 'student_id': student['_id'],
                 'date': today
             })
-            
             if not record:
                 attendance.insert_one({
                     'student_id': student['_id'],
@@ -134,7 +137,7 @@ def verify_face():
                     'message': f"Check-out recorded at {now.strftime('%Y-%m-%d %H:%M:%S')}",
                     'type': 'check_out'
                 })
-        
+
         return jsonify({'success': False, 'message': 'No face detected!'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
@@ -149,8 +152,7 @@ def view_attendance():
             'as': 'student'
         }
     }])
-    return render_template('view_attendance.html', 
-                        records=list(records))
+    return render_template('view_attendance.html', records=list(records))
 
 if __name__ == '__main__':
     with app.app_context():
@@ -159,4 +161,5 @@ if __name__ == '__main__':
                 'username': 'admin',
                 'password': 'admin123'
             })
-    app.run(debug=True)
+    # 🔥 Use a different port like 5001 to avoid conflict
+    app.run(host='0.0.0.0', port=5001, debug=True)
